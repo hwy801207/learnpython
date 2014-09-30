@@ -24,6 +24,7 @@ def Pascal(line):
         p.append(tmp)
     return p
 
+# add a new line to file
 Pascal(6)
 for i in p:
     f = str(i).center(len(str(p[-1])))
