@@ -29,3 +29,4 @@ Pascal(6)
 for i in p:
     f = str(i).center(len(str(p[-1])))
     print f.replace(',', ' ').replace('[', '').replace(']', '')
+# Add end of file
