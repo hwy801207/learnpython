@@ -1,0 +1,240 @@
+##########LOCAL REPO config parameters##########
+LOCAL_REPO='172.24.0.7'
+
+##########Parameters##########
+CONNECTIONS_ALIVE_TIME_OUT=1 # if connections are not closed after one minute abort starting ...
+PRIVATE_KEY_FILE='keys.dat'
+SLEEP_TIME=2 			# seconds to sleep between two connection closed checks
+SLEEP_START_TIME=5 		# seconds to sleep between two services start
+SLEEP_INSTALL_TIME=1 	# seconds to sleep between two services install
+SLEEP_CORE_API=30 		# seconds to sleep between core services start and api services start
+SLEEP_STOP_TIME=5 		# seconds to sleep between two services stop
+
+BASE_URL='base.url = https://203.130.40.111'
+MAIL_PROPERTIES="####senbcloud mail####
+system.email=postmaster@che001.sendcloud.org
+mail.smtp.host=smtpcloud.sohu.com
+mail.smtp.port=25
+mail.smtp.socketFactory.port=25
+mail.debug=true
+mail.transport.protocol=smtp
+mail.smtp.auth=true
+mail.smtp.socketFactory.class=javax.net.ssl.SSLSocketFactory
+mail.from=postmaster@che001.sendcloud.org
+mail.username=postmaster@che001.sendcloud.org
+mail.password=yHqCUqwO"
+
+
+APACHE_KEY='A2.key'
+APACHE_CERT='A2.crt'
+KEYSTORE_LOCATION='/etc/ssl/certs/'
+
+##########BASP config##########
+BASP_HOSTNAME='basp.che001.com'
+BASP_PUBLIC_IP='172.24.0.9'
+BASP_PORT=443
+BASP_KEYSTORE=$KEYSTORE_LOCATION'keyC_v4.jks'
+BASP_KEYSTORE_PASS='devops2013'
+BASP_TRUSTSTORE=$KEYSTORE_LOCATION'trustApache.jks'
+BASP_TRUSTSTORE_PASS='devops2013'
+API_BASP_HOST='api-basp.che001.com'
+API_BASP_APACHE_PORT=4432
+
+PORT_USER=10001
+PORT_COMPANY=11001
+PORT_BANKING=12001
+PORT_MESSAGING=13001
+PORT_FILE=14001
+PORT_BACKEND=15001
+PORT_ENCRYPTION=17001
+PORT_ENGINE=18001
+PORT_TRANSACTION=19001
+
+PORT_API_USER=9000
+PORT_API_AUTH=9001
+PORT_API_BASP=9002
+PORT_API_SEARCH=9003
+PORT_API_COMPANY=9004
+PORT_API_BANKING=9005
+PORT_API_SUPPORT=9006
+PORT_API_TRANSACTION=9007
+PORT_API_BACKEND=9009
+
+PORT_HTTPS_API_USER=4430
+PORT_HTTPS_API_AUTH=4431
+PORT_HTTPS_API_SEARCH=4433
+PORT_HTTPS_API_COMPANY=4434
+PORT_HTTPS_API_BANKING=4435
+PORT_HTTPS_API_SUPPORT=4436
+PORT_HTTPS_API_TRANSACTION=4437
+PORT_HTTPS_API_BACKEND=4439
+
+PORT_SEARCH_STRING=$PORT_USER"\|"$PORT_COMPANY"\|"$PORT_BANKING"\|"$PORT_MESSAGING"\|"$PORT_FILE"\|"$PORT_ENCRYPTION"\|"$PORT_ENGINE"\|"$PORT_TRANSACTION"\|"$PORT_BACKEND"\|"$PORT_API_USER"\|"$PORT_API_AUTH"\|"$PORT_API_BANKING"\|"$PORT_API_COMPANY"\|"$PORT_API_SUPPORT"\|"$PORT_API_SEARCH"\|"$PORT_API_TRANSACTION"\|"$PORT_API_BACKEND"\|"$PORT_HTTPS_API_USER"\|"$PORT_HTTPS_API_AUTH"\|"$PORT_HTTPS_API_BANKING"\|"$PORT_HTTPS_API_COMPANY"\|"$PORT_HTTPS_API_SUPPORT"\|"$PORT_HTTPS_API_SEARCH"\|"$PORT_HTTPS_API_TRANSACTION"\|"$PORT_HTTPS_API_BACKEND
+
+
+##########Swift paramters##########
+SWIFT_ENDPOINT='http://203.130.40.98:5000/v2.0'
+SWIFT_USERNAME='kycloud-qa'
+SWIFT_PASS='kaiyuan2014'
+SWIFT_TENANT='kaiyuan-qa'
+
+##########MYSQL config parameters##########
+MYSQL_SERVER='172.24.0.5'
+MYSQL_PORT=3306
+MYSQL_USERNAME='platform'
+MYSQL_PASSWORD='platform'
+MYSQL_DB_NAME='che001'
+
+##########MONGO config parameters##########
+MONGO_SERVER='172.24.0.6'
+MONGO_PORT=27017
+MONGO_USERNAME='platform'
+MONGO_PASSWORD='platform'
+MONGO_DB_NAME='che001'
+
+##########SOLR config parameters##########
+SOLR_SERVER='172.24.0.2'
+SOLR_PORT=8080
+
+##########RABBITMQ config parameters##########
+RABBITMQ_SERVER='172.24.0.2'
+RABBITMQ_PORT=5672
+RABBITMQ_USER='guest'
+RABBITMQ_PASSWD='guest'
+RABBITMQ_EXT_SERVER='172.24.0.2'
+RABBITMQ_EXT_PORT=5672
+RABBITMQ_EXT_USER='guest'
+RABBITMQ_EXT_PASSWD='guest'
+
+##########Redis config parameters##########
+REDIS_HOST='localhost'
+REDIS_PORT=6379
+
+function configureLocalRepo(){
+if [ ! -f /etc/yum.repos.d/localrepo.repo ]; then
+echo 'Configuring local repository ...' 
+echo '[LocalRepo]
+name=KY-Local-Repo
+baseurl=http://'$LOCAL_REPO'
+enabled=1
+gpgcheck=0' > /etc/yum.repos.d/localrepo.repo
+chmod 644 /etc/yum.repos.d/localrepo.repo
+sleep 1
+fi
+echo 'Cleaning repositories ...' 
+yum clean all > /dev/null
+
+}
+
+function configureBASPParameters(){
+EXISTS=$(grep $BASP_HOSTNAME /etc/hosts | grep $BASP_PUBLIC_IP)
+if [ ! -z "$EXISTS" ]; then
+echo '
+'$BASP_PUBLIC_IP' '$BASP_HOSTNAME >> /etc/hosts
+fi
+
+echo '
+ky.core.common.external.basp.url=https://'$BASP_HOSTNAME':'$BASP_PORT'
+ky.core.common.external.basp.settlementpayments.route=settlementpayments
+ky.core.common.external.basp.billing.route=billing
+ky.core.common.keystore.path='$BASP_KEYSTORE'
+ky.core.common.keystore.pass='$BASP_KEYSTORE_PASS'
+ky.core.common.truesstore.path='$BASP_TRUSTSTORE'
+ky.core.common.truesstore.pass='$BASP_TRUSTSTORE_PASS'' > basp.properties
+}
+
+function waitForCloseConnections(){
+CONNECTIONS=$(netstat -an | grep tcp | grep $PORT_SEARCH_STRING)
+echo "Please wait untill all connections are beeing closed ..."
+i=1
+while [ ! -z "$CONNECTIONS" -a "$i" -le "$(($CONNECTIONS_ALIVE_TIME_OUT*$SLEEP_TIME))" ];
+do
+CONNECTIONS=$( netstat -an | grep tcp | grep $PORT_SEARCH_STRING)
+echo "Still open connections..."
+sleep $SLEEP_TIME
+((i++))
+done
+if [ ! -z "$CONNECTIONS" ]; then
+echo "Connections have not closed in time... Please close them and the start the new services !"
+exit 1
+fi
+}
+
+function installApacheBASP(){
+echo 'installApacheBASP'
+yum --disablerepo="*" --enablerepo="LocalRepo" install -y apache-basp
+}
+
+function findMyIP() {
+echo 'findMyIP'
+	myip=$(ifconfig | grep inet  | grep Bcast | grep Mask  | awk '{print $2}' | awk -F":" 'BEGIN {count=0;} END {if ( count == DEFAULT_ETH ) print $2 ; count++; }')
+}
+
+function configureApacheBasp(){
+echo 'configureApacheBasp'
+findMyIP
+sed 's/^ProxyPass .*/ProxyPass \/ http:\/\/localhost:'$PORT_API_BASP'\/ /' -i /usr/local/apache2/conf/httpd.conf
+sed 's/^ProxyPassReverse .*/ProxyPassReverse \/ http:\/\/localhost:'$PORT_API_BASP'\/ /' -i /usr/local/apache2/conf/httpd.conf
+sed 's/Redirect \/.*/Redirect \/ https:\/\/'$myip' /' -i /usr/local/apache2/conf/httpd.conf
+sed 's/^ServerName 192.*/ServerName '$API_BASP_HOST' /' -i /usr/local/apache2/conf/httpd.conf
+sed 's/^ServerName .*/ServerName '$API_BASP_HOST' /' -i /usr/local/apache2/conf/extra/httpd-ssl.conf
+sed 's/^Listen 443.*/Listen '$API_BASP_APACHE_PORT' /' -i /usr/local/apache2/conf/extra/httpd-ssl.conf
+sed 's/^SSLCertificateFile .*/SSLCertificateFile \"\/usr\/local\/apache2\/conf\/'$APACHE_CERT'\" /' -i /usr/local/apache2/conf/extra/httpd-ssl.conf
+sed 's/^SSLCertificateKeyFile .*/SSLCertificateKeyFile \"\/usr\/local\/apache2\/conf\/'$APACHE_KEY'\" /' -i /usr/local/apache2/conf/extra/httpd-ssl.conf
+
+}
+
+function installAndConfigureApacheBASP(){
+echo 'installAndConfigureApacheBASP'
+if [ -z "$APACHE_BASP_EXISTED" ]; then
+installApacheBASP
+configureApacheBasp
+fi
+}
+
+
+function stopApache(){
+	service httpd stop
+}
+
+function startApache(){
+	service httpd start
+}
+
+function uninstallService(){
+SERVICE_TO_UNINSTALL=$1
+EXISTS=$(rpm -qa | grep $SERVICE_TO_UNINSTALL)
+if [ ! -z "$EXISTS" ]; then
+echo "Removing $EXISTS ..."
+yum --disablerepo="*" --enablerepo="LocalRepo" remove -y $SERVICE_TO_UNINSTALL > /dev/null
+else
+	return 4
+fi
+EXISTS=$(rpm -qa | grep $SERVICE_TO_UNINSTALL)
+if [ -z "$EXISTS" ]; then
+	echo "Service $SERVICE_TO_UNINSTALL was removed..."
+else
+	echo "ERROR : $EXISTS could not be removed..."
+	return 4
+fi
+}
+
+function installService(){
+SERVICE_TO_INSTALL=$1
+yum clean all  > /dev/null
+EXISTS=$(rpm -qa | grep $SERVICE_TO_INSTALL)
+if [ ! -z "$EXISTS" ]; then
+	echo "ERROR : $EXISTS already exists !!!"
+	return 4
+else
+	echo "Installing $SERVICE_TO_INSTALL ..."
+	yum --disablerepo="*" --enablerepo="LocalRepo" install -y $SERVICE_TO_INSTALL  > /dev/null
+fi
+EXISTS=$(rpm -qa | grep $SERVICE_TO_INSTALL)
+if [ -z "$EXISTS" ]; then
+	echo "ERROR : $SERVICE_TO_INSTALL was not installed !!!!"
+	return 4
+else
+	echo "$EXISTS was successfully installed"
+fi
+}

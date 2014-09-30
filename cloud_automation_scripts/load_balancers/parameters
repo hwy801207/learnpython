@@ -1,0 +1,45 @@
+function checkNovaAndNeutron(){
+##########Check and configure `nova` and `neutron` commands ##########
+if  which nova >/dev/null  2>&1 ; then
+		echo 'Nova is installed' 
+	else
+		if  which pip &>/dev/null 2>&1; then
+			echo 'Python-pip is installed... Installing novaclient ...' 
+			pip install python-novaclient
+		else
+			echo "Installing python-pip and novaclient ..." 
+			yum install -y python-pip	
+			pip install python-novaclient
+		fi
+fi
+if  which neutron >/dev/null  2>&1 ; then
+		echo 'Neutron is installed' 
+	else
+		if  which pip &>/dev/null 2>&1; then
+			echo 'Python-pip is installed... Installing neutronclient ...' 
+			pip install python-neutronclient
+		else
+			echo "Installing python-pip and neutronclient ..." 
+			yum install -y python-pip	
+			pip install python-neutronclient
+		fi
+fi
+}
+
+function listInstances(){
+echo 'Listing all instances...'
+nova list > novalist.tmp
+}
+
+function listMembers(){
+echo 'Listing load balancers members...'
+neutron lb-member-list > memberlist.tmp
+}
+
+function listLBMemberDetails(){
+	grep $1 memberlist.tmp
+}
+function clean(){
+	rm -rf novalist.tmp
+	rm -rf memberlist.tmp
+}

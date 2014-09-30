@@ -1,0 +1,128 @@
+
+function logMessageToConsole(){
+	echo '[ '$1' ] - ['$(date "+%Y-%m-%d %H:%M:%S")'] - '$2
+}
+
+function configureLocalRepo(){
+logMessageToConsole "INFO" "configureLocalRepo"
+if [ ! -f /etc/yum.repos.d/localrepo.repo ]; then
+logMessageToConsole "INFO" 'Configuring local repository ...' 
+echo '[LocalRepo]
+name=KY-Local-Repo
+baseurl=http://'$LOCAL_REPO'/rpmrepo
+enabled=1
+gpgcheck=0' > /etc/yum.repos.d/localrepo.repo
+chmod 644 /etc/yum.repos.d/localrepo.repo
+sleep 1
+fi
+logMessageToConsole "INFO" 'Cleaning repositories ...' 
+yum clean all > /dev/null
+
+}
+
+function waitForCloseConnections(){
+logMessageToConsole "INFO" "waitForCloseConnections"
+CONNECTIONS=$(netstat -an | grep tcp | grep $PORT_SEARCH_STRING)
+logMessageToConsole "INFO" "Please wait untill all connections are beeing closed ..."
+i=1
+while [ ! -z "$CONNECTIONS" -a "$i" -le "$(($CONNECTIONS_ALIVE_TIME_OUT*$SLEEP_TIME))" ];
+do
+CONNECTIONS=$( netstat -an | grep tcp | grep $PORT_SEARCH_STRING)
+logMessageToConsole "INFO" "Still open connections..."
+sleep $SLEEP_TIME
+((i++))
+done
+if [ ! -z "$CONNECTIONS" ]; then
+logMessageToConsole "ERROR" "Connections have not closed in time... Please close them and the start the new services !"
+exit 1
+fi
+}
+
+
+##########Adding hostname in hosts##########
+function configureHostname(){
+logMessageToConsole "INFO" "configureHostname"
+if grep -q `hostname` /etc/hosts; then
+		logMessageToConsole "INFO" "Host is already configured!"
+	else
+		logMessageToConsole "INFO" "Configuring host ..."
+		echo $myip " " `hostname` >> /etc/hosts
+fi
+if grep `hostname` /etc/hosts >/dev/null; then
+logMessageToConsole "INFO" "Successfully configure host property"
+else
+logMessageToConsole "INFO" "Could not set host property in hosts file !"
+exit 1;
+fi
+}
+
+
+function configureHOSTS(){
+logMessageToConsole "INFO" "configureHOSTS"
+HOST_ALREADY_CONFIGURED=$(grep $API_BASP_IP /etc/hosts | grep $API_BASP_HOST)
+
+if [ ! -z "$(grep $API_BASP_HOST /etc/hosts)" -a -z "$HOST_ALREADY_CONFIGURED" ] ; then
+	sed '/'$API_BASP_HOST'/d' /etc/hosts
+fi
+
+if [ -z "$HOST_ALREADY_CONFIGURED" ]; then
+	echo "$API_BASP_IP $API_BASP_HOST" >> /etc/hosts
+fi
+
+LOCALHOST_ALREADY_CONFIGURED=$(grep $myip /etc/hosts | grep $BASP_API_HOST)
+if [ -z "$LOCALHOST_ALREADY_CONFIGURED" ]; then
+	echo "$myip $BASP_API_HOST" >> /etc/hosts
+fi
+
+RABBITMQ_HOST_ALREADY_CONFIGURED=$(grep $API_BASP_IP /etc/hosts | grep $RABBITMQ_EXT_SERVER)
+
+if [ ! -z "$(grep $RABBITMQ_EXT_SERVER /etc/hosts)" -a -z "$RABBITMQ_HOST_ALREADY_CONFIGURED" ]; then
+	sed '/'$RABBITMQ_EXT_SERVER'/d' /etc/hosts
+fi
+
+if [ -z "$RABBITMQ_HOST_ALREADY_CONFIGURED" ]; then
+echo "$API_BASP_IP $RABBITMQ_EXT_SERVER" >> /etc/hosts
+fi
+
+}
+
+function uninstallService(){
+logMessageToConsole "INFO" "uninstallService $1"
+SERVICE_TO_UNINSTALL=$1
+EXISTS=$(rpm -qa | grep $SERVICE_TO_UNINSTALL)
+if [ ! -z "$EXISTS" ]; then
+logMessageToConsole "INFO" "Removing $EXISTS ..."
+yum --disablerepo="*" --enablerepo="LocalRepo" remove -y $SERVICE_TO_UNINSTALL > /dev/null
+else
+	logMessageToConsole "WARNING" "Service $SERVICE_TO_UNINSTALL does not exists."
+	return 4
+fi
+EXISTS=$(rpm -qa | grep $SERVICE_TO_UNINSTALL)
+if [ -z "$EXISTS" ]; then
+	logMessageToConsole "INFO" "Service $SERVICE_TO_UNINSTALL was removed..."
+else
+	logMessageToConsole "ERROR" "$EXISTS could not be removed..."
+	return 4
+fi
+}
+
+function installService(){
+logMessageToConsole "INFO" "installService $1"
+SERVICE_TO_INSTALL=$1
+yum clean all  > /dev/null
+EXISTS=$(rpm -qa | grep $SERVICE_TO_INSTALL)
+if [ ! -z "$EXISTS" ]; then
+	logMessageToConsole "ERROR" "$EXISTS already exists."
+	return 4
+else
+	logMessageToConsole "INFO" "Installing $SERVICE_TO_INSTALL ..."
+	yum --disablerepo="*" --enablerepo="LocalRepo" install -y $SERVICE_TO_INSTALL > /dev/null
+fi
+EXISTS=$(rpm -qa | grep $SERVICE_TO_INSTALL)
+if [ -z "$EXISTS" ]; then
+	logMessageToConsole "ERROR" "$SERVICE_TO_INSTALL was not installed."
+	return 4
+else
+	logMessageToConsole "INFO" "$EXISTS was successfully installed"
+fi
+}

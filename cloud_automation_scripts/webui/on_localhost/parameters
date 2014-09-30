@@ -1,0 +1,40 @@
+##########LOCAL REPO config parameters##########
+LOCAL_REPO='192.168.150.253'
+
+MACHINE_IP='192.168.150.189'
+DEPLOY_SCHEMA='webui'
+FLOW_REGISTER_COMPANY_USER='76b197dc-a16a-4df2-87c7-64d0d939e694'
+FLOW_APPLY_KYPAY='8dda5e3d-5818-43a6-8762-cac4811bf2b8'
+
+##########LOCAL REPO config function##########
+function configureLocalRepo(){
+if [ ! -f /etc/yum.repos.d/localrepo.repo ]; then
+echo 'Configuring local repository ...' 
+echo '[LocalRepo]
+name=KY-Local-Repo
+baseurl=http://'$LOCAL_REPO'/rpmrepo
+enabled=1
+gpgcheck=0' > /etc/yum.repos.d/localrepo.repo
+chmod 644 /etc/yum.repos.d/localrepo.repo
+sleep 1
+fi
+echo 'Cleaning repositories ...' 
+yum clean all
+
+}
+
+##########Adding hostname in hosts##########
+function configureHostname(){
+if grep -q `hostname` /etc/hosts; then
+		echo "Host is already configured!"
+	else
+		echo "Configuring host ..."
+		echo $myip " " `hostname` >> /etc/hosts
+fi
+if grep `hostname` /etc/hosts >/dev/null; then
+echo "Successfully configure host property"
+else
+echo "Could not set host property in hosts file !"
+exit 1;
+fi
+}

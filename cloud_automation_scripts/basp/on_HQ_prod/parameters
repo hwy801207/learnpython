@@ -1,0 +1,50 @@
+##########LOCAL REPO config parameters##########
+LOCAL_REPO='JackChen:V93oIE6T214T4z@203.130.40.100'
+
+myip='121.28.7.98'
+
+##########Parameters##########
+CONNECTIONS_ALIVE_TIME_OUT=1 # if connections are not closed after one minute abort starting ...
+SLEEP_TIME=2 # seconds to sleep between two connection closed checks
+PRIVATE_KEY_FILE='keys.dat'
+DEFAULT_ETH=0
+KEYSTORE='/etc/ssl/certs/keyC_v4.jks'
+KEYSTORE_PASS='devops2013'
+TRUSTSTORE='/etc/ssl/certs/trustApache.jks'
+PORT_BASP_API=9008
+
+##########BASP config parameters##########
+BASP_API_HOST='basp.che001.com'
+
+##########API_BASP config parameters##########
+API_BASP_HOST='api-basp.che001.com'
+API_BASP_PORT=443
+API_BASP_PROTOCOL='https://'
+API_BASP_IP='203.130.40.157'
+SETTLEMENT_ROUTE='settlement/result'
+BILLING_ROUTE='billing/exec'
+
+PORT_SEARCH_STRING=$PORT_BASP_API
+
+##########ORACLE config parameters##########
+ORACLE_CONN_STRING='(DESCRIPTION = (LOAD_BALANCE=on) (ADDRESS_LIST = (ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.16.53)(PORT = 1521)) (ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.16.54)(PORT = 1521)) ) (CONNECT_DATA = (SERVICE_NAME = cwdb) )  )'
+ORACLE_SERVER='192.168.16.53'
+ORACLE_PORT=1521
+ORACLE_USERNAME='kybj'
+ORACLE_PASSWORD='kybj'
+
+##########RABBITMQ config parameters##########
+RABBITMQ_SERVER='localhost'
+RABBITMQ_PORT=5672
+RABBITMQ_USER='kaiyuan'
+RABBITMQ_PASSWD='kaiyuan2014'
+
+RABBITMQ_EXT_SERVER='rabbitmq.che001.com'
+RABBITMQ_EXT_PORT='5672'
+RABBITMQ_EXT_USER='kaiyuan'
+RABBITMQ_EXT_PASSWD='kaiyuan2014'
+RABBITMQ_EXT_SSL='true'
+RABBITMQ_KEYSTORE='/etc/ssl/certs/keyR_v1.p12'
+RABBITMQ_KEYSTORE_PASS='devops2013'
+RABBITMQ_TRUSTSTORE='/etc/ssl/certs/trustApache.jks'
+RABBITMQ_TRUSTSTORE_PASS='devops2013'
