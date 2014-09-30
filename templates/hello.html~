@@ -1,0 +1,6 @@
+{% if name %}
+<h1> hello {{name}} !</h1>
+<p> request.method 
+{% else %}
+<h1> hello world</h1>
+{% endif %}
